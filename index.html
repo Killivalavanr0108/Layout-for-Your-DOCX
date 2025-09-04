@@ -55,15 +55,19 @@
         </div>
         <div>
           <label>Register No.</label>
-          <input id="regno" value="" placeholder="Enter register no" />
+          <input id="regno" placeholder="Enter register no" />
         </div>
         <div>
           <label>Student Name</label>
-          <input id="student" value="" placeholder="Enter student name" />
+          <input id="student" placeholder="Enter student name" />
         </div>
         <div>
           <label>Total Questions</label>
           <input id="qcount" type="number" min="1" max="200" value="25" />
+        </div>
+        <div>
+          <label>Custom File Name (optional)</label>
+          <input id="filename" placeholder="k_level_report" />
         </div>
       </div>
       <div class="spacer"></div>
@@ -177,10 +181,13 @@
     document.getElementById('make').addEventListener('click', async ()=>{
       try{
         const blob = await buildDoc();
+        const customName = document.getElementById('filename').value.trim();
         const dept = document.getElementById('department').value.trim().replace(/\s+/g,'_');
         const subj = document.getElementById('subjectCode').value.trim();
         const student = document.getElementById('student').value.trim().replace(/\s+/g,'_') || 'student';
-        const fileName = `k_level_${dept}_${subj}_${student}.docx`;
+        const fileName = customName 
+          ? `${customName}.docx`
+          : `k_level_${dept}_${subj}_${student}.docx`;
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = fileName;
