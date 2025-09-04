@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>K-Level Format DOCX Generator</title>
+  <style>
+    :root { --bg:#f6f9ff; --card:#fff; --text:#0f172a; --muted:#475569; --brand:#2563eb; }
+    *{ box-sizing:border-box }
+    body{ margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", sans-serif; background:var(--bg); color:var(--text); }
+    header{ padding:28px 20px 10px; text-align:center }
+    h1{ margin:0; font-size:22px }
+    p.sub{ margin:6px 0 0; color:var(--muted); font-size:14px }
+    .container{ max-width:980px; margin:20px auto 40px; padding:16px }
+    .card{ background:var(--card); border-radius:16px; box-shadow:0 6px 24px rgba(2,6,23,.08); padding:16px }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px }
+    label{ font-size:13px; color:var(--muted) }
+    input, select{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid #e2e8f0; background:#fff; color:var(--text); font-size:14px }
+    input:focus, select:focus{ outline:2px solid rgba(37,99,235,.35); border-color:var(--brand) }
+    .btn{ display:inline-flex; align-items:center; gap:10px; padding:11px 16px; background:var(--brand); color:#fff; border:none; border-radius:12px; cursor:pointer; font-weight:600; box-shadow:0 6px 16px rgba(37,99,235,.25) }
+    .btn:active{ transform:translateY(1px) }
+    .row{ display:grid; grid-template-columns:80px repeat(6, 1fr); gap:8px; align-items:center }
+    .rows{ display:flex; flex-direction:column; gap:8px; max-height:360px; overflow:auto; padding:8px; border:1px dashed #cbd5e1; border-radius:12px; background:#fafcff }
+    .row-head{ font-weight:700; color:#0b1324 }
+    .muted{ color:var(--muted) }
+    .small{ font-size:12px }
+    .spacer{ height:8px }
+  </style>
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+</head>
+<body>
+  <header>
+    <h1>K-Level Format DOCX Generator</h1>
+    <p class="sub">Generate a .docx file in the same format (Q.No × K1–K6 with (●)/(o))</p>
+  </header>
+
+  <div class="container">
+    <div class="card" id="formCard">
+      <div class="grid">
+        <div>
+          <label>College Title</label>
+          <input id="college" value="Government Arts College, Nandanam, Chennai-35." />
+        </div>
+        <div>
+          <label>Department</label>
+          <input id="department" value="III-B.SC.COMPUTER SCIENCE" />
+        </div>
+        <div>
+          <label>Subject Name</label>
+          <input id="subjectName" value="Big Data Analytics" />
+        </div>
+        <div>
+          <label>Subject Code</label>
+          <input id="subjectCode" value="224160" />
+        </div>
+        <div>
+          <label>Register No.</label>
+          <input id="regno" value="" placeholder="Enter register no" />
+        </div>
+        <div>
+          <label>Student Name</label>
+          <input id="student" value="" placeholder="Enter student name" />
+        </div>
+        <div>
+          <label>Total Questions</label>
+          <input id="qcount" type="number" min="1" max="200" value="25" />
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div>
+        <label class="muted">Select the K-level for each question (or leave empty)</label>
+        <div class="rows" id="rows"></div>
+        <p class="small muted">Only one K-level is allowed per question. Empty will mark all (o).</p>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn" id="make">Generate DOCX</button>
+    </div>
+  </div>
+
+  <script>
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
+
+    const rowsWrap = document.getElementById('rows');
+    const qcountEl = document.getElementById('qcount');
+
+    function makeRow(q){
+      const div = document.createElement('div');
+      div.className = 'row';
+      const qLabel = document.createElement('div');
+      qLabel.textContent = q;
+      qLabel.className = 'muted';
+      div.appendChild(qLabel);
+      for(let k=1;k<=6;k++){
+        const sel = document.createElement('select');
+        sel.innerHTML = `<option value="">—</option><option value="K${k}">K${k}</option>`;
+        div.appendChild(sel);
+      }
+      return div;
+    }
+
+    function renderRows(){
+      rowsWrap.innerHTML = '';
+      const n = Math.max(1, Math.min(200, parseInt(qcountEl.value||'1',10)));
+      const head = document.createElement('div');
+      head.className = 'row row-head';
+      ['Q.No','K1','K2','K3','K4','K5','K6'].forEach(t=>{
+        const d=document.createElement('div'); d.textContent=t; head.appendChild(d);
+      });
+      rowsWrap.appendChild(head);
+      for(let i=1;i<=n;i++) rowsWrap.appendChild(makeRow(i));
+    }
+
+    qcountEl.addEventListener('change', renderRows);
+    renderRows();
+
+    function getSelections(){
+      const selections = [];
+      const children = Array.from(rowsWrap.children).slice(1);
+      children.forEach((row, idx)=>{
+        const q = idx+1;
+        const selects = row.querySelectorAll('select');
+        let chosen = '';
+        selects.forEach((sel)=>{ if(sel.value) chosen = sel.value; });
+        selections.push({ q, K: chosen });
+      });
+      return selections;
+    }
+
+    function cell(text){
+      return new TableCell({
+        children:[ new Paragraph({ alignment: AlignmentType.CENTER, children:[ new TextRun({ text }) ] }) ],
+        width: { size: 1200, type: WidthType.DXA }
+      });
+    }
+
+    function buildDoc(){
+      const title = document.getElementById('college').value.trim();
+      const dept = document.getElementById('department').value.trim();
+      const subjName = document.getElementById('subjectName').value.trim();
+      const subjCode = document.getElementById('subjectCode').value.trim();
+      const reg = document.getElementById('regno').value.trim();
+      const student = document.getElementById('student').value.trim();
+      const selections = getSelections();
+
+      const headerParas = [
+        new Paragraph({ alignment: AlignmentType.CENTER, children:[ new TextRun({ text: title, bold:true }) ] }),
+        new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Student Name : ${student}` }) ] }),
+        new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Register No : ${reg}` }) ] }),
+        new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Department : ${dept}` }) ] }),
+        new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Subject Name : ${subjName}` }) ] }),
+        new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Subject Code :  ${subjCode}` }) ] }),
+        new Paragraph({ text: "" })
+      ];
+
+      const rows = [];
+      rows.push(new TableRow({ children:[ 'Q.No','K1','K2','K3','K4','K5','K6' ].map(h=>cell(h)) }));
+
+      const dot = '(●)';
+      const ring = '(o)';
+
+      for(const item of selections){
+        const arr = [ring,ring,ring,ring,ring,ring];
+        if(item.K){
+          const kIndex = parseInt(item.K.replace('K',''),10) - 1;
+          if(kIndex>=0 && kIndex<6) arr[kIndex] = dot;
+        }
+        rows.push(new TableRow({ children: [ cell(String(item.q)), ...arr.map(t=>cell(t)) ] }));
+      }
+
+      const table = new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } });
+
+      const doc = new Document({ sections:[{ children:[ ...headerParas, table ] }] });
+
+      return Packer.toBlob(doc);
+    }
+
+    document.getElementById('make').addEventListener('click', async ()=>{
+      try{
+        const blob = await buildDoc();
+        const dept = document.getElementById('department').value.trim().replace(/\s+/g,'_');
+        const subj = document.getElementById('subjectCode').value.trim();
+        const student = document.getElementById('student').value.trim().replace(/\s+/g,'_') || 'student';
+        const fileName = `k_level_${dept}_${subj}_${student}.docx`;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(a.href);
+      }catch(err){
+        alert('Failed to generate DOCX: '+ err.message);
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
