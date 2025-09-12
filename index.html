@@ -25,16 +25,13 @@
     .muted{ color:var(--muted) }
     .small{ font-size:12px }
     .spacer{ height:8px }
-    @media (max-width: 600px) {
-      .grid { grid-template-columns: 1fr; }
-    }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
   <header>
     <h1>K-Level Format PDF Generator</h1>
-    <p class="sub">Generate a PDF file in the same format (Q.No × K1–K6 with (●))</p>
+    <p class="sub">Generate a PDF file in the same format (Q.No × K1–K6 with (●)/(o))</p>
   </header>
 
   <div class="container">
@@ -104,10 +101,11 @@
         div.appendChild(sel);
       }
 
-      // allow only one selection per row
+      // 🔥 Add logic to allow only one selection per row
       selects.forEach(sel => {
         sel.addEventListener('change', () => {
           if (sel.value) {
+            // Clear all others
             selects.forEach(other => {
               if (other !== sel) other.value = "";
             });
@@ -154,27 +152,27 @@
       const dept = document.getElementById('department').value.trim();
       const subjName = document.getElementById('subjectName').value.trim();
       const subjCode = document.getElementById('subjectCode').value.trim();
-      const reg = document.getElementById('regno').value.trim() || "N/A";
-      const student = document.getElementById('student').value.trim() || "N/A";
+      const reg = document.getElementById('regno').value.trim();
+      const student = document.getElementById('student').value.trim();
       const selections = getSelections();
 
       let y = 15;
       doc.setFontSize(14);
-      doc.setFont(undefined, 'bold');
       doc.text(title, 105, y, { align: 'center' });
-      doc.setFont(undefined, 'normal');
       y += 10;
       doc.setFontSize(11);
       doc.text(`Student Name: ${student}`, 10, y); y+=6;
       doc.text(`Register No: ${reg}`, 10, y); y+=6;
       doc.text(`Department: ${dept}`, 10, y); y+=6;
       doc.text(`Subject Name: ${subjName}`, 10, y); y+=6;
-      doc.text(`Subject Code: ${subjCode}`, 10, y); y+=12;
+      doc.text(`Subject Code: ${subjCode}`, 10, y); y+=10;
 
       const startX = 10;
       const colWidths = [15, 25, 25, 25, 25, 25, 25];
       const headers = ['Q.No','K1','K2','K3','K4','K5','K6'];
       const rowHeight = 8;
+      const dot = '(●)';
+      const ring = '(o)';
 
       function drawRow(values){
         let x = startX;
@@ -202,10 +200,10 @@
       drawHeader();
 
       selections.forEach(item=>{
-        const arr = ["","","","","",""]; // blank cells
+        const arr = [ring,ring,ring,ring,ring,ring];
         if(item.K){
           const kIndex = parseInt(item.K.replace('K',''),10) - 1;
-          if(kIndex>=0 && kIndex<6) arr[kIndex] = "(●)";
+          if(kIndex>=0 && kIndex<6) arr[kIndex] = dot;
         }
         drawRow([String(item.q), ...arr]);
       });
