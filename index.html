@@ -72,9 +72,9 @@
       </div>
       <div class="spacer"></div>
       <div>
-        <label class="muted">Select the K-level for each question (or leave empty)</label>
+        <label class="muted">Select the K-level for each question (only one per question)</label>
         <div class="rows" id="rows"></div>
-        <p class="small muted">Only one K-level is allowed per question. Empty will mark all (o).</p>
+        <p class="small muted">Selecting one will automatically clear the others.</p>
       </div>
       <div class="spacer"></div>
       <button class="btn" id="make">Generate PDF</button>
@@ -92,11 +92,27 @@
       qLabel.textContent = q;
       qLabel.className = 'muted';
       div.appendChild(qLabel);
+
+      const selects = [];
       for(let k=1;k<=6;k++){
         const sel = document.createElement('select');
         sel.innerHTML = `<option value="">—</option><option value="K${k}">K${k}</option>`;
+        selects.push(sel);
         div.appendChild(sel);
       }
+
+      // 🔥 Add logic to allow only one selection per row
+      selects.forEach(sel => {
+        sel.addEventListener('change', () => {
+          if (sel.value) {
+            // Clear all others
+            selects.forEach(other => {
+              if (other !== sel) other.value = "";
+            });
+          }
+        });
+      });
+
       return div;
     }
 
@@ -151,15 +167,37 @@
       doc.text(`Subject Name: ${subjName}`, 10, y); y+=6;
       doc.text(`Subject Code: ${subjCode}`, 10, y); y+=10;
 
-      doc.setFontSize(10);
       const startX = 10;
-      const colWidth = 25;
+      const colWidths = [15, 25, 25, 25, 25, 25, 25];
       const headers = ['Q.No','K1','K2','K3','K4','K5','K6'];
-      headers.forEach((h,i)=>doc.text(h,startX+i*colWidth,y));
-      y+=6;
-
+      const rowHeight = 8;
       const dot = '(●)';
       const ring = '(o)';
+
+      function drawRow(values){
+        let x = startX;
+        values.forEach((val,i)=>{
+          doc.rect(x, y-rowHeight+2, colWidths[i], rowHeight, 'S');
+          doc.text(val, x+colWidths[i]/2, y, { align: 'center' });
+          x += colWidths[i];
+        });
+        y += rowHeight;
+        if(y > 280){ doc.addPage(); y=15; drawHeader(); }
+      }
+
+      function drawHeader(){
+        let x = startX;
+        doc.setFont(undefined, 'bold');
+        headers.forEach((h,i)=>{
+          doc.rect(x, y-rowHeight+2, colWidths[i], rowHeight, 'S');
+          doc.text(h, x+colWidths[i]/2, y, { align: 'center' });
+          x += colWidths[i];
+        });
+        doc.setFont(undefined, 'normal');
+        y += rowHeight;
+      }
+
+      drawHeader();
 
       selections.forEach(item=>{
         const arr = [ring,ring,ring,ring,ring,ring];
@@ -167,10 +205,7 @@
           const kIndex = parseInt(item.K.replace('K',''),10) - 1;
           if(kIndex>=0 && kIndex<6) arr[kIndex] = dot;
         }
-        doc.text(String(item.q), startX, y);
-        arr.forEach((t,i)=>doc.text(t, startX+(i+1)*colWidth, y));
-        y+=6;
-        if(y > 280){ doc.addPage(); y=15; }
+        drawRow([String(item.q), ...arr]);
       });
 
       let fileName = document.getElementById('filename').value.trim();
