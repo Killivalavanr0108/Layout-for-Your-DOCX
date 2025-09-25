@@ -6,77 +6,48 @@
   <title>K-Level Format PDF Generator</title>
   <style>
     :root { --bg:#f6f9ff; --card:#fff; --text:#0f172a; --muted:#475569; --brand:#2563eb; }
-    *{ box-sizing:border-box }
-    body{ margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", sans-serif; background:var(--bg); color:var(--text); }
-    header{ padding:28px 20px 10px; text-align:center }
-    h1{ margin:0; font-size:22px }
-    p.sub{ margin:6px 0 0; color:var(--muted); font-size:14px }
-    .container{ max-width:980px; margin:20px auto 40px; padding:16px }
-    .card{ background:var(--card); border-radius:16px; box-shadow:0 6px 24px rgba(2,6,23,.08); padding:16px }
-    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px }
-    label{ font-size:13px; color:var(--muted) }
-    input, select{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid #e2e8f0; background:#fff; color:var(--text); font-size:14px }
-    input:focus, select:focus{ outline:2px solid rgba(37,99,235,.35); border-color:var(--brand) }
-    .btn{ display:inline-flex; align-items:center; gap:10px; padding:11px 16px; background:var(--brand); color:#fff; border:none; border-radius:12px; cursor:pointer; font-weight:600; box-shadow:0 6px 16px rgba(37,99,235,.25) }
-    .btn:active{ transform:translateY(1px) }
-    .row{ display:grid; grid-template-columns:80px repeat(6, 1fr); gap:8px; align-items:center }
-    .rows{ display:flex; flex-direction:column; gap:8px; max-height:360px; overflow:auto; padding:8px; border:1px dashed #cbd5e1; border-radius:12px; background:#fafcff }
-    .row-head{ font-weight:700; color:#0b1324 }
-    .muted{ color:var(--muted) }
-    .small{ font-size:12px }
-    .spacer{ height:8px }
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
+    header{padding:28px 20px 10px;text-align:center}
+    h1{margin:0;font-size:22px}
+    p.sub{margin:6px 0 0;color:var(--muted);font-size:14px}
+    .container{max-width:980px;margin:20px auto 40px;padding:16px}
+    .card{background:var(--card);border-radius:16px;box-shadow:0 6px 24px rgba(2,6,23,.08);padding:16px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    label{font-size:13px;color:var(--muted)}
+    input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;font-size:14px}
+    .btn{display:inline-flex;align-items:center;gap:10px;padding:11px 16px;background:var(--brand);color:#fff;border:none;border-radius:12px;cursor:pointer;font-weight:600;box-shadow:0 6px 16px rgba(37,99,235,.25)}
+    .btn:active{transform:translateY(1px)}
+    .row{display:grid;grid-template-columns:80px repeat(6, 1fr);gap:8px;align-items:center}
+    .rows{display:flex;flex-direction:column;gap:8px;max-height:360px;overflow:auto;padding:8px;border:1px dashed #cbd5e1;border-radius:12px;background:#fafcff}
+    .row-head{font-weight:700;color:#0b1324}
+    .muted{color:var(--muted)}
+    .small{font-size:12px}
+    input[type="checkbox"]{transform:scale(1.3);cursor:pointer}
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
   <header>
     <h1>K-Level Format PDF Generator</h1>
-    <p class="sub">Generate a PDF file in the same format (Q.No × K1–K6 with (●)/(o))</p>
+    <p class="sub">Fill multiple K-levels per question and generate a clean PDF</p>
   </header>
 
   <div class="container">
     <div class="card" id="formCard">
       <div class="grid">
-        <div>
-          <label>College Title</label>
-          <input id="college" value="Government Arts College, Nandanam, Chennai-35." />
-        </div>
-        <div>
-          <label>Department</label>
-          <input id="department" value="III-B.SC.COMPUTER SCIENCE" />
-        </div>
-        <div>
-          <label>Subject Name</label>
-          <input id="subjectName" value="Big Data Analytics" />
-        </div>
-        <div>
-          <label>Subject Code</label>
-          <input id="subjectCode" value="224160" />
-        </div>
-        <div>
-          <label>Register No.</label>
-          <input id="regno" placeholder="Enter register no" />
-        </div>
-        <div>
-          <label>Student Name</label>
-          <input id="student" placeholder="Enter student name" />
-        </div>
-        <div>
-          <label>Total Questions</label>
-          <input id="qcount" type="number" min="1" max="200" value="25" />
-        </div>
-        <div>
-          <label>Custom File Name (optional)</label>
-          <input id="filename" placeholder="k_level_report" />
-        </div>
+        <div><label>College Title</label><input id="college" value="Government Arts College, Nandanam, Chennai-35." /></div>
+        <div><label>Department</label><input id="department" value="III-B.SC.COMPUTER SCIENCE" /></div>
+        <div><label>Subject Name</label><input id="subjectName" value="Big Data Analytics" /></div>
+        <div><label>Subject Code</label><input id="subjectCode" value="224160" /></div>
+        <div><label>Register No.</label><input id="regno" placeholder="Enter register no" /></div>
+        <div><label>Student Name</label><input id="student" placeholder="Enter student name" /></div>
+        <div><label>Total Questions</label><input id="qcount" type="number" min="1" max="200" value="25" /></div>
+        <div><label>Custom File Name (optional)</label><input id="filename" placeholder="k_level_report" /></div>
       </div>
-      <div class="spacer"></div>
-      <div>
-        <label class="muted">Select the K-level for each question (only one per question)</label>
+      <div style="margin:12px 0">
+        <label class="muted">Mark one or more K-levels per question:</label>
         <div class="rows" id="rows"></div>
-        <p class="small muted">Selecting one will automatically clear the others.</p>
       </div>
-      <div class="spacer"></div>
       <button class="btn" id="make">Generate PDF</button>
     </div>
   </div>
@@ -93,24 +64,12 @@
       qLabel.className = 'muted';
       div.appendChild(qLabel);
 
-      const selects = [];
       for(let k=1;k<=6;k++){
-        const sel = document.createElement('select');
-        sel.innerHTML = `<option value="">—</option><option value="K${k}">K${k}</option>`;
-        selects.push(sel);
-        div.appendChild(sel);
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.dataset.k = k;
+        div.appendChild(cb);
       }
-
-      selects.forEach(sel => {
-        sel.addEventListener('change', () => {
-          if (sel.value) {
-            selects.forEach(other => {
-              if (other !== sel) other.value = "";
-            });
-          }
-        });
-      });
-
       return div;
     }
 
@@ -126,23 +85,22 @@
       for(let i=1;i<=n;i++) rowsWrap.appendChild(makeRow(i));
     }
 
-    qcountEl.addEventListener('change', renderRows);
-    renderRows();
-
     function getSelections(){
-      const selections = [];
+      const selections=[];
       const children = Array.from(rowsWrap.children).slice(1);
       children.forEach((row, idx)=>{
         const q = idx+1;
-        const selects = row.querySelectorAll('select');
-        let chosen = '';
-        selects.forEach((sel)=>{ if(sel.value) chosen = sel.value; });
-        selections.push({ q, K: chosen });
+        const boxes = row.querySelectorAll('input[type="checkbox"]');
+        const states = Array.from(boxes).map(cb=>cb.checked);
+        selections.push({q, states});
       });
       return selections;
     }
 
-    document.getElementById('make').addEventListener('click', async ()=>{
+    qcountEl.addEventListener('change', renderRows);
+    renderRows();
+
+    document.getElementById('make').addEventListener('click', ()=>{
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
@@ -157,64 +115,53 @@
       let y = 15;
       doc.setFontSize(14);
       doc.text(title, 105, y, { align: 'center' });
-      y += 10;
+      y+=10;
       doc.setFontSize(11);
-      if (student) { doc.text(`Student Name: ${student}`, 10, y); y+=6; }
-      if (reg) { doc.text(`Register No: ${reg}`, 10, y); y+=6; }
-      doc.text(`Department: ${dept}`, 10, y); y+=6;
-      doc.text(`Subject Name: ${subjName}`, 10, y); y+=6;
-      doc.text(`Subject Code: ${subjCode}`, 10, y); y+=10;
+      if(student){ doc.text(`Student Name: ${student}`,10,y); y+=6; }
+      if(reg){ doc.text(`Register No: ${reg}`,10,y); y+=6; }
+      doc.text(`Department: ${dept}`,10,y); y+=6;
+      doc.text(`Subject Name: ${subjName}`,10,y); y+=6;
+      doc.text(`Subject Code: ${subjCode}`,10,y); y+=10;
 
-      const startX = 10;
-      const colWidths = [15, 25, 25, 25, 25, 25, 25];
-      const headers = ['Q.No','K1','K2','K3','K4','K5','K6'];
-      const rowHeight = 8;
-      const dot = '(●)'; 
-      const ring = '(o)';
+      const startX=10;
+      const colWidths=[15,25,25,25,25,25,25];
+      const headers=['Q.No','K1','K2','K3','K4','K5','K6'];
+      const rowHeight=8;
+      const dot='(●)', ring='(o)';
 
       function drawRow(values){
-        let x = startX;
+        let x=startX;
         values.forEach((val,i)=>{
-          doc.rect(x, y-rowHeight+2, colWidths[i], rowHeight, 'S');
-          doc.text(val, x+colWidths[i]/2, y, { align: 'center' });
-          x += colWidths[i];
+          doc.rect(x,y-rowHeight+2,colWidths[i],rowHeight,'S');
+          doc.text(val,x+colWidths[i]/2,y,{align:'center'});
+          x+=colWidths[i];
         });
-        y += rowHeight;
-        if(y > 280){ doc.addPage(); y=15; drawHeader(); }
+        y+=rowHeight;
+        if(y>280){doc.addPage();y=15;drawHeader();}
       }
 
       function drawHeader(){
-        let x = startX;
-        doc.setFont(undefined, 'bold');
+        let x=startX;
+        doc.setFont(undefined,'bold');
         headers.forEach((h,i)=>{
-          doc.rect(x, y-rowHeight+2, colWidths[i], rowHeight, 'S');
-          doc.text(h, x+colWidths[i]/2, y, { align: 'center' });
-          x += colWidths[i];
+          doc.rect(x,y-rowHeight+2,colWidths[i],rowHeight,'S');
+          doc.text(h,x+colWidths[i]/2,y,{align:'center'});
+          x+=colWidths[i];
         });
-        doc.setFont(undefined, 'normal');
-        y += rowHeight;
+        doc.setFont(undefined,'normal');
+        y+=rowHeight;
       }
 
       drawHeader();
 
       selections.forEach(item=>{
-        const arr = [ring,ring,ring,ring,ring,ring];
-        if(item.K){
-          const kIndex = parseInt(item.K.replace('K',''),10) - 1;
-          if(kIndex>=0 && kIndex<6) arr[kIndex] = dot;
-        }
+        const arr = item.states.map(s=>s?dot:ring);
         drawRow([String(item.q), ...arr]);
       });
 
-      let fileName = document.getElementById('filename').value.trim();
-      if (!fileName) {
-        const deptFile = dept.replace(/\s+/g,'_');
-        const subjFile = subjCode;
-        const studentFile = student.replace(/\s+/g,'_') || 'student';
-        fileName = `k_level_${deptFile}_${subjFile}_${studentFile}`;
-      }
-      if (!fileName.toLowerCase().endsWith('.pdf')) fileName += '.pdf';
-
+      let fileName=document.getElementById('filename').value.trim();
+      if(!fileName) fileName=`k_level_${student||'student'}.pdf`;
+      if(!fileName.toLowerCase().endsWith('.pdf')) fileName+='.pdf';
       doc.save(fileName);
     });
   </script>
