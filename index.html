@@ -16,20 +16,19 @@
     label{font-size:13px;color:var(--muted)}
     input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;font-size:14px}
     .btn{display:inline-flex;align-items:center;gap:10px;padding:11px 16px;background:var(--brand);color:#fff;border:none;border-radius:12px;cursor:pointer;font-weight:600;box-shadow:0 6px 16px rgba(37,99,235,.25)}
-    .btn:active{transform:translateY(1px)}
     .row{display:grid;grid-template-columns:80px repeat(6, 1fr);gap:8px;align-items:center}
     .rows{display:flex;flex-direction:column;gap:8px;max-height:360px;overflow:auto;padding:8px;border:1px dashed #cbd5e1;border-radius:12px;background:#fafcff}
     .row-head{font-weight:700;color:#0b1324}
     .muted{color:var(--muted)}
     .small{font-size:12px}
-    input[type="checkbox"]{transform:scale(1.3);cursor:pointer}
+    input[type="radio"]{transform:scale(1.3);cursor:pointer}
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
   <header>
     <h1>K-Level Format PDF Generator</h1>
-    <p class="sub">Fill multiple K-levels per question and generate a clean PDF</p>
+    <p class="sub">Select only one K-level per question and generate a clean PDF</p>
   </header>
 
   <div class="container">
@@ -45,7 +44,7 @@
         <div><label>Custom File Name (optional)</label><input id="filename" placeholder="k_level_report" /></div>
       </div>
       <div style="margin:12px 0">
-        <label class="muted">Mark one or more K-levels per question:</label>
+        <label class="muted">Select exactly ONE K-level per question:</label>
         <div class="rows" id="rows"></div>
       </div>
       <button class="btn" id="make">Generate PDF</button>
@@ -64,11 +63,14 @@
       qLabel.className = 'muted';
       div.appendChild(qLabel);
 
+      // groupName ensures only one radio selected per question
+      const groupName = `q${q}`;
       for(let k=1;k<=6;k++){
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.dataset.k = k;
-        div.appendChild(cb);
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = groupName;
+        radio.value = k;
+        div.appendChild(radio);
       }
       return div;
     }
@@ -90,9 +92,10 @@
       const children = Array.from(rowsWrap.children).slice(1);
       children.forEach((row, idx)=>{
         const q = idx+1;
-        const boxes = row.querySelectorAll('input[type="checkbox"]');
-        const states = Array.from(boxes).map(cb=>cb.checked);
-        selections.push({q, states});
+        const radios = row.querySelectorAll('input[type="radio"]');
+        let chosen = null;
+        radios.forEach(r=>{ if(r.checked) chosen = parseInt(r.value,10)-1; });
+        selections.push({q, chosen});
       });
       return selections;
     }
@@ -155,7 +158,8 @@
       drawHeader();
 
       selections.forEach(item=>{
-        const arr = item.states.map(s=>s?dot:ring);
+        const arr = [ring,ring,ring,ring,ring,ring];
+        if(item.chosen !== null) arr[item.chosen] = dot;
         drawRow([String(item.q), ...arr]);
       });
 
