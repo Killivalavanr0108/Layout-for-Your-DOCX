@@ -3,43 +3,87 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>K-Level PDF Generator</title>
+  <title>K-Level Format DOCX Generator</title>
   <style>
-    body { font-family: system-ui, sans-serif; background: #f6f9ff; padding: 20px; }
-    .container { max-width: 980px; margin: auto; }
-    label { display: block; margin-top: 10px; font-weight: bold; }
-    input, select, button { margin-top: 5px; padding: 8px; font-size: 14px; }
-    #rows { max-height: 300px; overflow-y: auto; border: 1px dashed #cbd5e1; padding: 5px; margin-top: 5px; }
-    .row { display: grid; grid-template-columns: 60px repeat(6, 1fr); gap: 5px; align-items: center; margin-bottom: 5px; }
+    :root { --bg:#f6f9ff; --card:#fff; --text:#0f172a; --muted:#475569; --brand:#2563eb; }
+    *{ box-sizing:border-box }
+    body{ margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", sans-serif; background:var(--bg); color:var(--text); }
+    header{ padding:28px 20px 10px; text-align:center }
+    h1{ margin:0; font-size:22px }
+    p.sub{ margin:6px 0 0; color:var(--muted); font-size:14px }
+    .container{ max-width:980px; margin:20px auto 40px; padding:16px }
+    .card{ background:var(--card); border-radius:16px; box-shadow:0 6px 24px rgba(2,6,23,.08); padding:16px }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px }
+    label{ font-size:13px; color:var(--muted) }
+    input, select{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid #e2e8f0; background:#fff; color:var(--text); font-size:14px }
+    input:focus, select:focus{ outline:2px solid rgba(37,99,235,.35); border-color:var(--brand) }
+    .btn{ display:inline-flex; align-items:center; gap:10px; padding:11px 16px; background:var(--brand); color:#fff; border:none; border-radius:12px; cursor:pointer; font-weight:600; box-shadow:0 6px 16px rgba(37,99,235,.25) }
+    .btn:active{ transform:translateY(1px) }
+    .row{ display:grid; grid-template-columns:80px repeat(6, 1fr); gap:8px; align-items:center }
+    .rows{ display:flex; flex-direction:column; gap:8px; max-height:360px; overflow:auto; padding:8px; border:1px dashed #cbd5e1; border-radius:12px; background:#fafcff }
+    .row-head{ font-weight:700; color:#0b1324 }
+    .muted{ color:var(--muted) }
+    .small{ font-size:12px }
+    .spacer{ height:8px }
   </style>
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>K-Level PDF Generator</h1>
-    <label>College</label>
-    <input id="college" value="Government Arts College, Nandanam, Chennai-35.">
-    <label>Department</label>
-    <input id="department" value="III-B.SC.COMPUTER SCIENCE">
-    <label>Subject Name</label>
-    <input id="subjectName" value="Big Data Analytics">
-    <label>Subject Code</label>
-    <input id="subjectCode" value="224160">
-    <label>Register No.</label>
-    <input id="regno">
-    <label>Student Name</label>
-    <input id="student">
-    <label>Total Questions</label>
-    <input id="qcount" type="number" min="1" max="200" value="25">
-    <label>Custom File Name (optional)</label>
-    <input id="filename" placeholder="k_level_report">
+  <header>
+    <h1>K-Level Format DOCX Generator</h1>
+    <p class="sub">Generate a .docx file in the same format (Q.No × K1–K6 with (●)/(o))</p>
+  </header>
 
-    <div id="rows"></div>
-    <button id="generate">Generate PDF</button>
+  <div class="container">
+    <div class="card" id="formCard">
+      <div class="grid">
+        <div>
+          <label>College Title</label>
+          <input id="college" value="Government Arts College, Nandanam, Chennai-35." />
+        </div>
+        <div>
+          <label>Department</label>
+          <input id="department" value="III-B.SC.COMPUTER SCIENCE" />
+        </div>
+        <div>
+          <label>Subject Name</label>
+          <input id="subjectName" value="Big Data Analytics" />
+        </div>
+        <div>
+          <label>Subject Code</label>
+          <input id="subjectCode" value="224160" />
+        </div>
+        <div>
+          <label>Register No.</label>
+          <input id="regno" placeholder="Enter register no" />
+        </div>
+        <div>
+          <label>Student Name</label>
+          <input id="student" placeholder="Enter student name" />
+        </div>
+        <div>
+          <label>Total Questions</label>
+          <input id="qcount" type="number" min="1" max="200" value="25" />
+        </div>
+        <div>
+          <label>Custom File Name (optional)</label>
+          <input id="filename" placeholder="k_level_report" />
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div>
+        <label class="muted">Select the K-level for each question (or leave empty)</label>
+        <div class="rows" id="rows"></div>
+        <p class="small muted">Only one K-level is allowed per question. Empty will mark all (o).</p>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn" id="make">Generate DOCX</button>
+    </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
-    const { jsPDF } = window.jspdf;
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
+
     const rowsWrap = document.getElementById('rows');
     const qcountEl = document.getElementById('qcount');
 
@@ -48,14 +92,11 @@
       div.className = 'row';
       const qLabel = document.createElement('div');
       qLabel.textContent = q;
+      qLabel.className = 'muted';
       div.appendChild(qLabel);
-
-      // Only one K-level selectable per question
       for(let k=1;k<=6;k++){
-        const sel = document.createElement('input');
-        sel.type = 'radio';
-        sel.name = `q${q}`; // ensures only one per question
-        sel.value = `K${k}`;
+        const sel = document.createElement('select');
+        sel.innerHTML = `<option value="">—</option><option value="K${k}">K${k}</option>`;
         div.appendChild(sel);
       }
       return div;
@@ -63,61 +104,104 @@
 
     function renderRows(){
       rowsWrap.innerHTML = '';
-      const n = parseInt(qcountEl.value||'1',10);
+      const n = Math.max(1, Math.min(200, parseInt(qcountEl.value||'1',10)));
+      const head = document.createElement('div');
+      head.className = 'row row-head';
+      ['Q.No','K1','K2','K3','K4','K5','K6'].forEach(t=>{
+        const d=document.createElement('div'); d.textContent=t; head.appendChild(d);
+      });
+      rowsWrap.appendChild(head);
       for(let i=1;i<=n;i++) rowsWrap.appendChild(makeRow(i));
     }
 
     qcountEl.addEventListener('change', renderRows);
     renderRows();
 
-    document.getElementById('generate').addEventListener('click', ()=>{
-      const doc = new jsPDF();
-      let y = 10;
-      const college = document.getElementById('college').value;
-      const dept = document.getElementById('department').value;
-      const subjName = document.getElementById('subjectName').value;
-      const subjCode = document.getElementById('subjectCode').value;
-      const reg = document.getElementById('regno').value;
-      const student = document.getElementById('student').value;
-
-      doc.setFontSize(14);
-      doc.text(college, 105, y, { align: 'center' }); y+=8;
-      doc.setFontSize(12);
-      doc.text(`Student Name: ${student}`, 10, y); y+=6;
-      doc.text(`Register No: ${reg}`, 10, y); y+=6;
-      doc.text(`Department: ${dept}`, 10, y); y+=6;
-      doc.text(`Subject Name: ${subjName}`, 10, y); y+=6;
-      doc.text(`Subject Code: ${subjCode}`, 10, y); y+=10;
-
-      // Table header
-      doc.setFont(undefined, 'bold');
-      doc.text('Q.No', 10, y);
-      for(let i=1;i<=6;i++) doc.text(`K${i}`, 30 + (i-1)*20, y);
-      y+=6;
-      doc.setFont(undefined, 'normal');
-
-      const rows = Array.from(rowsWrap.children);
-      rows.forEach(row=>{
-        const cells = row.querySelectorAll('div, input');
-        const q = cells[0].textContent;
-        doc.text(q, 10, y);
-
-        for(let i=1;i<=6;i++){
-          const radio = cells[i];
-          const text = radio.checked ? '(●)' : '(o)';
-          doc.text(text, 30 + (i-1)*20, y);
-        }
-
-        y+=6;
-        if(y>280){ doc.addPage(); y=10; }
+    function getSelections(){
+      const selections = [];
+      const children = Array.from(rowsWrap.children).slice(1);
+      children.forEach((row, idx)=>{
+        const q = idx+1;
+        const selects = row.querySelectorAll('select');
+        let chosen = '';
+        selects.forEach((sel)=>{ if(sel.value) chosen = sel.value; });
+        selections.push({ q, K: chosen });
       });
+      return selections;
+    }
 
-      // File name
-      let fileName = document.getElementById('filename').value.trim();
-      if(!fileName) fileName = `KLevel_${student||'student'}`;
-      if(!fileName.toLowerCase().endsWith('.pdf')) fileName += '.pdf';
+    function cell(text, bold=false){
+      return new TableCell({
+        children:[ new Paragraph({ alignment: AlignmentType.CENTER, children:[ new TextRun({ text, bold }) ] }) ],
+        width: { size: 1200, type: WidthType.DXA }
+      });
+    }
 
-      doc.save(fileName);
+    function buildDoc(){
+      const title = document.getElementById('college').value.trim();
+      const dept = document.getElementById('department').value.trim();
+      const subjName = document.getElementById('subjectName').value.trim();
+      const subjCode = document.getElementById('subjectCode').value.trim();
+      const reg = document.getElementById('regno').value.trim();
+      const student = document.getElementById('student').value.trim();
+      const selections = getSelections();
+
+      const headerParas = [
+        new Paragraph({ alignment: AlignmentType.CENTER, children:[ new TextRun({ text: title, bold:true }) ] }),
+        new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Student Name : ${student}` }) ] }),
+        new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Register No : ${reg}` }) ] }),
+        new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Department : ${dept}` }) ] }),
+        new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Subject Name : ${subjName}` }) ] }),
+        new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Subject Code :  ${subjCode}` }) ] }),
+        new Paragraph({ text: "" })
+      ];
+
+      const rows = [];
+      // Bold header row
+      rows.push(new TableRow({ children:[ 'Q.No','K1','K2','K3','K4','K5','K6' ].map(h=>cell(h,true)) }));
+
+      const dot = '(●)';
+      const ring = '(o)';
+
+      for(const item of selections){
+        const arr = [ring,ring,ring,ring,ring,ring];
+        if(item.K){
+          const kIndex = parseInt(item.K.replace('K',''),10) - 1;
+          if(kIndex>=0 && kIndex<6) arr[kIndex] = dot;
+        }
+        rows.push(new TableRow({ children: [ cell(String(item.q)), ...arr.map(t=>cell(t)) ] }));
+      }
+
+      const table = new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } });
+
+      const doc = new Document({ sections:[{ children:[ ...headerParas, table ] }] });
+
+      return Packer.toBlob(doc);
+    }
+
+    document.getElementById('make').addEventListener('click', async ()=>{
+      try {
+        const blob = await buildDoc();
+        let fileName = document.getElementById('filename').value.trim();
+        if (!fileName) {
+          const dept = document.getElementById('department').value.trim().replace(/\s+/g,'_');
+          const subj = document.getElementById('subjectCode').value.trim();
+          const student = document.getElementById('student').value.trim().replace(/\s+/g,'_') || 'student';
+          fileName = `k_level_${dept}_${subj}_${student}`;
+        }
+        if (!fileName.toLowerCase().endsWith('.docx')) fileName += '.docx';
+
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(a.href);
+      } catch(err) {
+        alert('Failed to generate DOCX: ' + err.message);
+        console.error(err);
+      }
     });
   </script>
 </body>
