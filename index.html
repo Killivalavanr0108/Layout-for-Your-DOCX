@@ -66,10 +66,15 @@
           <input id="qcount" type="number" min="1" max="200" value="25" />
         </div>
         <div>
+          <label>College Logo (optional)</label>
+          <input type="file" id="logoInput" accept="image/*" />
+        </div>
+        <div>
           <label>Custom File Name (optional)</label>
           <input id="filename" placeholder="k_level_report" />
         </div>
       </div>
+
       <div class="spacer"></div>
       <div>
         <label class="muted">Select the K-level for each question (or leave empty)</label>
@@ -82,7 +87,7 @@
   </div>
 
   <script>
-    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, Media } = docx;
 
     const rowsWrap = document.getElementById('rows');
     const qcountEl = document.getElementById('qcount');
@@ -100,7 +105,7 @@
         const sel = document.createElement('select');
         sel.innerHTML = `<option value="">—</option><option value="K${k}">K${k}</option>`;
 
-        // Ensure only one K-level can be selected
+        // Only one K-level selectable
         sel.addEventListener('change', ()=>{
           if(sel.value){
             selects.forEach(s=>{
@@ -150,7 +155,7 @@
       });
     }
 
-    function buildDoc(){
+    async function buildDoc(){
       const title = document.getElementById('college').value.trim();
       const dept = document.getElementById('department').value.trim();
       const subjName = document.getElementById('subjectName').value.trim();
@@ -159,7 +164,21 @@
       const student = document.getElementById('student').value.trim();
       const selections = getSelections();
 
-      const headerParas = [
+      const logoFile = document.getElementById('logoInput').files[0];
+      let logoImage;
+      if(logoFile){
+        const arrayBuffer = await logoFile.arrayBuffer();
+        logoImage = arrayBuffer;
+      }
+
+      const headerParas = [];
+
+      if(logoImage){
+        const image = Media.addImage(logoImage, 100, 100); // width, height
+        headerParas.push(new Paragraph({ children: [image], alignment: AlignmentType.CENTER }));
+      }
+
+      headerParas.push(
         new Paragraph({ alignment: AlignmentType.CENTER, children:[ new TextRun({ text: title, bold:true }) ] }),
         new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Student Name : ${student}` }) ] }),
         new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Register No : ${reg}` }) ] }),
@@ -167,7 +186,7 @@
         new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Subject Name : ${subjName}` }) ] }),
         new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Subject Code :  ${subjCode}` }) ] }),
         new Paragraph({ text: "" })
-      ];
+      );
 
       const rows = [];
       rows.push(new TableRow({ children:[ 'Q.No','K1','K2','K3','K4','K5','K6' ].map(h=>cell(h,true)) }));
