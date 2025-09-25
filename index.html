@@ -30,7 +30,9 @@
     <input id="student">
     <label>Total Questions</label>
     <input id="qcount" type="number" min="1" max="200" value="25">
-    
+    <label>Custom File Name (optional)</label>
+    <input id="filename" placeholder="k_level_report">
+
     <div id="rows"></div>
     <button id="generate">Generate PDF</button>
   </div>
@@ -38,7 +40,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
     const { jsPDF } = window.jspdf;
-
     const rowsWrap = document.getElementById('rows');
     const qcountEl = document.getElementById('qcount');
 
@@ -48,9 +49,13 @@
       const qLabel = document.createElement('div');
       qLabel.textContent = q;
       div.appendChild(qLabel);
+
+      // Only one K-level selectable per question
       for(let k=1;k<=6;k++){
-        const sel = document.createElement('select');
-        sel.innerHTML = `<option value="">(o)</option><option value="K${k}">(●)</option>`;
+        const sel = document.createElement('input');
+        sel.type = 'radio';
+        sel.name = `q${q}`; // ensures only one per question
+        sel.value = `K${k}`;
         div.appendChild(sel);
       }
       return div;
@@ -93,19 +98,26 @@
 
       const rows = Array.from(rowsWrap.children);
       rows.forEach(row=>{
-        const cells = row.querySelectorAll('div, select');
+        const cells = row.querySelectorAll('div, input');
         const q = cells[0].textContent;
         doc.text(q, 10, y);
+
         for(let i=1;i<=6;i++){
-          const sel = cells[i];
-          const text = sel.value || '(o)';
+          const radio = cells[i];
+          const text = radio.checked ? '(●)' : '(o)';
           doc.text(text, 30 + (i-1)*20, y);
         }
+
         y+=6;
         if(y>280){ doc.addPage(); y=10; }
       });
 
-      doc.save(`KLevel_${student||'student'}.pdf`);
+      // File name
+      let fileName = document.getElementById('filename').value.trim();
+      if(!fileName) fileName = `KLevel_${student||'student'}`;
+      if(!fileName.toLowerCase().endsWith('.pdf')) fileName += '.pdf';
+
+      doc.save(fileName);
     });
   </script>
 </body>
