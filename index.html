@@ -94,9 +94,22 @@
       qLabel.textContent = q;
       qLabel.className = 'muted';
       div.appendChild(qLabel);
+
+      const selects = [];
       for(let k=1;k<=6;k++){
         const sel = document.createElement('select');
         sel.innerHTML = `<option value="">—</option><option value="K${k}">K${k}</option>`;
+
+        // Ensure only one K-level can be selected
+        sel.addEventListener('change', ()=>{
+          if(sel.value){
+            selects.forEach(s=>{
+              if(s !== sel) s.value = '';
+            });
+          }
+        });
+
+        selects.push(sel);
         div.appendChild(sel);
       }
       return div;
@@ -157,7 +170,6 @@
       ];
 
       const rows = [];
-      // Bold header row
       rows.push(new TableRow({ children:[ 'Q.No','K1','K2','K3','K4','K5','K6' ].map(h=>cell(h,true)) }));
 
       const dot = '(●)';
