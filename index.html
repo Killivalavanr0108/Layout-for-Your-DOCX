@@ -87,7 +87,7 @@
   </div>
 
   <script>
-    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, Media } = docx;
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, ImageRun } = docx;
 
     const rowsWrap = document.getElementById('rows');
     const qcountEl = document.getElementById('qcount');
@@ -165,16 +165,14 @@
       const selections = getSelections();
 
       const logoFile = document.getElementById('logoInput').files[0];
-      let logoImage;
-      if(logoFile){
+      let headerParas = [];
+
+      if (logoFile){
         const arrayBuffer = await logoFile.arrayBuffer();
-        logoImage = arrayBuffer;
-      }
-
-      const headerParas = [];
-
-      if(logoImage){
-        const image = Media.addImage(logoImage, 100, 100); // width, height
+        const image = new ImageRun({
+          data: arrayBuffer,
+          transformation: { width: 100, height: 100 }
+        });
         headerParas.push(new Paragraph({ children: [image], alignment: AlignmentType.CENTER }));
       }
 
@@ -182,58 +180,4 @@
         new Paragraph({ alignment: AlignmentType.CENTER, children:[ new TextRun({ text: title, bold:true }) ] }),
         new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Student Name : ${student}` }) ] }),
         new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Register No : ${reg}` }) ] }),
-        new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Department : ${dept}` }) ] }),
-        new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Subject Name : ${subjName}` }) ] }),
-        new Paragraph({ alignment: AlignmentType.LEFT, children:[ new TextRun({ text: `Subject Code :  ${subjCode}` }) ] }),
-        new Paragraph({ text: "" })
-      );
-
-      const rows = [];
-      rows.push(new TableRow({ children:[ 'Q.No','K1','K2','K3','K4','K5','K6' ].map(h=>cell(h,true)) }));
-
-      const dot = '(●)';
-      const ring = '(o)';
-
-      for(const item of selections){
-        const arr = [ring,ring,ring,ring,ring,ring];
-        if(item.K){
-          const kIndex = parseInt(item.K.replace('K',''),10) - 1;
-          if(kIndex>=0 && kIndex<6) arr[kIndex] = dot;
-        }
-        rows.push(new TableRow({ children: [ cell(String(item.q)), ...arr.map(t=>cell(t)) ] }));
-      }
-
-      const table = new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } });
-
-      const doc = new Document({ sections:[{ children:[ ...headerParas, table ] }] });
-
-      return Packer.toBlob(doc);
-    }
-
-    document.getElementById('make').addEventListener('click', async ()=>{
-      try {
-        const blob = await buildDoc();
-        let fileName = document.getElementById('filename').value.trim();
-        if (!fileName) {
-          const dept = document.getElementById('department').value.trim().replace(/\s+/g,'_');
-          const subj = document.getElementById('subjectCode').value.trim();
-          const student = document.getElementById('student').value.trim().replace(/\s+/g,'_') || 'student';
-          fileName = `k_level_${dept}_${subj}_${student}`;
-        }
-        if (!fileName.toLowerCase().endsWith('.docx')) fileName += '.docx';
-
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(a.href);
-      } catch(err) {
-        alert('Failed to generate DOCX: ' + err.message);
-        console.error(err);
-      }
-    });
-  </script>
-</body>
-</html>
+        new Paragraph({ alignment:
