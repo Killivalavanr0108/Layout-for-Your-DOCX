@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>K-Level PDF Generator</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <title>K-Level PDF Generator (with Circles)</title>
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     label { display: block; margin-top: 8px; }
@@ -20,72 +20,78 @@
   <label>Register No: <input type="text" id="regno" value="2313111018022"></label>
   <label>Subject: <input type="text" id="subject" value="Big Data Analytics"></label>
   <label>Subject Code: <input type="text" id="subjectcode" value="224160"></label>
-
-  <table id="qTable">
-    <tr>
-      <th>Q.No</th>
-      <th>K1</th><th>K2</th><th>K3</th><th>K4</th><th>K5</th><th>K6</th>
-    </tr>
-    <tr>
-      <td>1</td>
-      <td><input type="radio" name="q1" value="K1"></td>
-      <td><input type="radio" name="q1" value="K2"></td>
-      <td><input type="radio" name="q1" value="K3"></td>
-      <td><input type="radio" name="q1" value="K4"></td>
-      <td><input type="radio" name="q1" value="K5"></td>
-      <td><input type="radio" name="q1" value="K6"></td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td><input type="radio" name="q2" value="K1"></td>
-      <td><input type="radio" name="q2" value="K2"></td>
-      <td><input type="radio" name="q2" value="K3"></td>
-      <td><input type="radio" name="q2" value="K4"></td>
-      <td><input type="radio" name="q2" value="K5"></td>
-      <td><input type="radio" name="q2" value="K6"></td>
-    </tr>
-  </table>
-
+  <label>Total Questions: <input type="number" id="qcount" value="5" min="1" max="200"></label>
+  <br>
   <button onclick="generatePDF()">Generate PDF</button>
 
   <script>
     async function generatePDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
+      const { PDFDocument, StandardFonts, rgb } = PDFLib;
+      const pdfDoc = await PDFDocument.create();
+      let page = pdfDoc.addPage([595, 842]); // A4
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-      let y = 15;
-      doc.setFontSize(12);
-      doc.text(document.getElementById("college").value, 105, y, { align: "center" });
-      y += 10;
-      doc.setFontSize(10);
-      doc.text("Department: " + document.getElementById("department").value, 14, y); y+=6;
-      doc.text("Student Name: " + document.getElementById("student").value, 14, y); y+=6;
-      doc.text("Register No: " + document.getElementById("regno").value, 14, y); y+=6;
-      doc.text("Subject: " + document.getElementById("subject").value, 14, y); y+=6;
-      doc.text("Subject Code: " + document.getElementById("subjectcode").value, 14, y); y+=10;
-
-      // table header
-      const headers = ["Q.No", "K1", "K2", "K3", "K4", "K5", "K6"];
-      let x = 14;
-      headers.forEach((h,i)=>{ doc.text(h, x + i*20, y); });
-      y += 8;
-
-      // rows
-      const dot = "(●)";
-      const ring = "(o)";
-      for(let q=1; q<=2; q++) {
-        let arr = [ring, ring, ring, ring, ring, ring];
-        const selected = document.querySelector("input[name='q"+q+"']:checked");
-        if(selected){
-          const idx = parseInt(selected.value.replace("K",""))-1;
-          arr[idx] = dot;
-        }
-        let row = [String(q)].concat(arr);
-        row.forEach((val,i)=>{ doc.text(val, x + i*20, y); });
-        y += 8;
+      let y = 800;
+      function drawText(text, x, size=12, bold=false) {
+        page.drawText(text, { x, y, size, font, color: rgb(0,0,0) });
       }
 
-      doc.save("KLevel_Output.pdf");
+      // Header
+      drawText(document.getElementById("college").value, 200, 14);
+      y -= 20;
+      drawText("Department: " + document.getElementById("department").value, 50, 11);
+      y -= 15;
+      drawText("Student Name: " + document.getElementById("student").value, 50, 11);
+      y -= 15;
+      drawText("Register No: " + document.getElementById("regno").value, 50, 11);
+      y -= 15;
+      drawText("Subject: " + document.getElementById("subject").value, 50, 11);
+      y -= 15;
+      drawText("Subject Code: " + document.getElementById("subjectcode").value, 50, 11);
+      y -= 30;
+
+      // Table header
+      const headers = ["Q.No", "K1", "K2", "K3", "K4", "K5", "K6"];
+      const x0 = 50, colW = 70, rowH = 25;
+      headers.forEach((h,i)=>{
+        page.drawText(h,{x:x0+i*colW+5,y,size:11,font});
+      });
+
+      // Draw rows
+      const qcount = parseInt(document.getElementById("qcount").value,10) || 1;
+      y -= rowH;
+      for (let q=1; q<=qcount; q++) {
+        // Simulate: pick random K for demo (you can replace with real form inputs)
+        const chosen = Math.floor(Math.random()*6); 
+
+        // Q.No
+        page.drawText(String(q), {x:x0+5, y, size:11, font});
+
+        // Draw K-levels (circles)
+        for (let k=0; k<6; k++) {
+          let cx = x0 + (k+1)*colW + 15; // circle center
+          let cy = y+5;
+          if (k === chosen) {
+            // filled circle = ●
+            page.drawCircle({ x: cx, y: cy, size: 4, color: rgb(0,0,0) });
+          } else {
+            // empty circle = (o)
+            page.drawCircle({ x: cx, y: cy, size: 4, borderColor: rgb(0,0,0), borderWidth: 1 });
+          }
+        }
+        y -= rowH;
+        if (y < 50) { // new page
+          page = pdfDoc.addPage([595,842]);
+          y = 780;
+        }
+      }
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "KLevel_Output.pdf";
+      a.click();
     }
   </script>
 </body>
