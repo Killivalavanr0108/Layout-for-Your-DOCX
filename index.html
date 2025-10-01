@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>K-Level PDF Generator (with Circles)</title>
+  <title>K-Level PDF Generator</title>
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     label { display: block; margin-top: 8px; }
-    table { border-collapse: collapse; margin-top: 20px; }
-    td, th { border: 1px solid #333; padding: 6px 12px; text-align: center; }
+    select { padding: 6px 10px; margin-right: 4px; }
+    .question-row { margin-bottom: 6px; }
   </style>
 </head>
 <body>
@@ -21,76 +21,112 @@
   <label>Subject: <input type="text" id="subject" value="Big Data Analytics"></label>
   <label>Subject Code: <input type="text" id="subjectcode" value="224160"></label>
   <label>Total Questions: <input type="number" id="qcount" value="5" min="1" max="200"></label>
-  <br>
+  <label>PDF File Name: <input type="text" id="filename" placeholder="KLevel_Output"></label>
+
+  <div id="questions"></div>
   <button onclick="generatePDF()">Generate PDF</button>
 
   <script>
+    const questionsDiv = document.getElementById('questions');
+    const qcountInput = document.getElementById('qcount');
+
+    function renderQuestions() {
+      questionsDiv.innerHTML = '';
+      const qcount = parseInt(qcountInput.value) || 1;
+      for (let q=1; q<=qcount; q++) {
+        const div = document.createElement('div');
+        div.className = 'question-row';
+        div.innerHTML = `Q.${q}: `;
+
+        const select = document.createElement('select');
+        select.innerHTML = `<option value="">—</option>
+                            <option value="0">K1</option>
+                            <option value="1">K2</option>
+                            <option value="2">K3</option>
+                            <option value="3">K4</option>
+                            <option value="4">K5</option>
+                            <option value="5">K6</option>`;
+        div.appendChild(select);
+        questionsDiv.appendChild(div);
+      }
+    }
+
+    qcountInput.addEventListener('change', renderQuestions);
+    renderQuestions();
+
     async function generatePDF() {
       const { PDFDocument, StandardFonts, rgb } = PDFLib;
       const pdfDoc = await PDFDocument.create();
-      let page = pdfDoc.addPage([595, 842]); // A4
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
+      let page = pdfDoc.addPage([595, 842]);
+      const rowH = 30;
       let y = 800;
-      function drawText(text, x, size=12, bold=false) {
+      const x0 = 50, colW = 70;
+
+      function drawText(text, x, y, size=12) {
         page.drawText(text, { x, y, size, font, color: rgb(0,0,0) });
       }
 
-      // Header
-      drawText(document.getElementById("college").value, 200, 14);
-      y -= 20;
-      drawText("Department: " + document.getElementById("department").value, 50, 11);
-      y -= 15;
-      drawText("Student Name: " + document.getElementById("student").value, 50, 11);
-      y -= 15;
-      drawText("Register No: " + document.getElementById("regno").value, 50, 11);
-      y -= 15;
-      drawText("Subject: " + document.getElementById("subject").value, 50, 11);
-      y -= 15;
-      drawText("Subject Code: " + document.getElementById("subjectcode").value, 50, 11);
-      y -= 30;
-
-      // Table header
-      const headers = ["Q.No", "K1", "K2", "K3", "K4", "K5", "K6"];
-      const x0 = 50, colW = 70, rowH = 25;
-      headers.forEach((h,i)=>{
-        page.drawText(h,{x:x0+i*colW+5,y,size:11,font});
-      });
-
-      // Draw rows
-      const qcount = parseInt(document.getElementById("qcount").value,10) || 1;
-      y -= rowH;
-      for (let q=1; q<=qcount; q++) {
-        // Simulate: pick random K for demo (you can replace with real form inputs)
-        const chosen = Math.floor(Math.random()*6); 
-
-        // Q.No
-        page.drawText(String(q), {x:x0+5, y, size:11, font});
-
-        // Draw K-levels (circles)
-        for (let k=0; k<6; k++) {
-          let cx = x0 + (k+1)*colW + 15; // circle center
-          let cy = y+5;
-          if (k === chosen) {
-            // filled circle = ●
-            page.drawCircle({ x: cx, y: cy, size: 4, color: rgb(0,0,0) });
-          } else {
-            // empty circle = (o)
-            page.drawCircle({ x: cx, y: cy, size: 4, borderColor: rgb(0,0,0), borderWidth: 1 });
-          }
-        }
-        y -= rowH;
-        if (y < 50) { // new page
-          page = pdfDoc.addPage([595,842]);
-          y = 780;
+      function drawCircle(cx, cy, filled=true) {
+        if (filled) {
+          page.drawEllipse({ x: cx, y: cy, xScale: 5, yScale: 5, color: rgb(0,0,0) });
+        } else {
+          page.drawEllipse({ x: cx, y: cy, xScale: 5, yScale: 5, borderColor: rgb(0,0,0), borderWidth: 1 });
         }
       }
+
+      // Header
+      drawText(document.getElementById("college").value, 150, y, 14);
+      y -= 20;
+      drawText("Department: " + document.getElementById("department").value, x0, y);
+      y -= 15;
+      drawText("Student Name: " + document.getElementById("student").value, x0, y);
+      y -= 15;
+      drawText("Register No: " + document.getElementById("regno").value, x0, y);
+      y -= 15;
+      drawText("Subject: " + document.getElementById("subject").value, x0, y);
+      y -= 15;
+      drawText("Subject Code: " + document.getElementById("subjectcode").value, x0, y);
+      y -= 30;
+
+      const headers = ["Q.No", "K1","K2","K3","K4","K5","K6"];
+
+      function drawTableHeader() {
+        headers.forEach((h,i) => drawText(h, x0 + i*colW, y));
+        y -= rowH;
+      }
+
+      drawTableHeader();
+
+      // Draw rows
+      const selects = Array.from(questionsDiv.querySelectorAll('select'));
+      selects.forEach((sel, idx) => {
+        const qNo = idx+1;
+        const chosen = sel.value ? parseInt(sel.value) : -1;
+
+        drawText(String(qNo), x0, y);
+
+        for (let k=0; k<6; k++) {
+          const cx = x0 + (k+1)*colW + 15;
+          const cy = y + rowH/2 - 5;
+          drawCircle(cx, cy, k === chosen);
+        }
+
+        y -= rowH;
+        if (y < 50) { // New page
+          page = pdfDoc.addPage([595,842]);
+          y = 780;
+          drawTableHeader();
+        }
+      });
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: "application/pdf" });
       const a = document.createElement("a");
+      const filename = document.getElementById("filename").value.trim() || "KLevel_Output";
       a.href = URL.createObjectURL(blob);
-      a.download = "KLevel_Output.pdf";
+      a.download = filename + ".pdf";
       a.click();
     }
   </script>
